@@ -44,6 +44,10 @@ public abstract class LiveDataAggregator <D extends Enum<D>, S, T> {
         destinationLiveData = destination;
     }
 
+    /*
+    This method is public because whenever a new stream completes loading data you need to call this method and set the data in it, passing the enumeration value of the 
+    type of data and the data loaded by the stream in the parameters
+    */
     @OverridingMethodsMustInvokeSuper
     public void holdData(D typeOfData, S data) {
 
@@ -65,7 +69,9 @@ public abstract class LiveDataAggregator <D extends Enum<D>, S, T> {
 
     /*
     This functions combines data coming from the same source (or type) with already existing data by defining the merge strategy
-    Remember to handle all types of streams here. If no data already exists, oldData is null
+    Remember to handle all types of streams here. If no data already exists, this method is not called and it is simply put into the Map.
+    If you need to perform some computation on the loaded data regardless of this, you can override holdData to do your custom logic
+    but remember to invoke super.holdData(D, S) (as annotated)
     */
     protected abstract S mergeWithExistingData(D typeofData, S oldData, S newData);
 
