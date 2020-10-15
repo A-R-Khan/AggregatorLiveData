@@ -12,13 +12,29 @@ import javax.annotation.OverridingMethodsMustInvokeSuper;
 Use this class when loading live data from multiple sources. Initialize the aggregator and call the
 aggregator functions in the source observers when they are invoked
 
-The template parameter is the type of data you are aggregating
+The template parameters define the type of streams you have, the data you are aggregating and the data you are publshing
+
+D : an Enum enumerating the kinds of data you have or the types of data streams you have so that the incoming data 
+    can be put into the same position in the HashMap
+S : The type of incoming data from sources or streams 
+    (if you have multiple types then make sure they extend the same base class and you can check the instance later in the abstract methods)
+T : The type of data in the destination
+    This is done for generality.
+    
+For example, Lets say you have 5 streams that each load an Image and in the output you want a list of Images and the kinds of streams are 
+STREAM_REMOTE and STREAM_LOCAL.
+
+Then, 
+
+D : enum StreamType{STREAM_LOCAL, STREAM_REMOTE}
+S : Image
+T : List<Image>
  */
 
-public abstract class LiveDataAggregator<D, S, T>{
+public abstract class LiveDataAggregator <D extends Enum<D>, S, T> {
 
     /*
-    when data is loaded it goes into this map where the string denotes the type of data
+    When data is loaded it goes into this map where the string denotes the type of data
     this is used later to check whether or not to aggregate and set value
     */
     protected final Map<D, S> dataOnHold = new HashMap<>();
@@ -47,13 +63,23 @@ public abstract class LiveDataAggregator<D, S, T>{
         }
     }
 
-    //this functions combines data coming from the same source (or type) with already existing data
+    /*
+    This functions combines data coming from the same source (or type) with already existing data by defining the merge strategy
+    Remember to handle all types of streams here. If no data already exists, oldData is null
+    */
     protected abstract S mergeWithExistingData(D typeofData, S oldData, S newData);
 
-    //this function checks if it is safe to combine values from the sources and set value
+    /*
+    This function checks if it is safe to combine values from the sources and set value so that all observers are notified of a change
+    Use the data put in dataOnHold and check for integrity, completeness, etc according to your needs.
+    return true if aggregate and notify should be done, false otherwise
+    */
     protected abstract boolean checkDataForAggregability();
 
-    //this function combines the data stored on hold
+    /*
+    This function combines the data stored on hold. call setValue from here into destinationLiveData after combining all your streams data
+    and after doing all your necessary computations
+    */
     protected abstract void aggregateData();
 
 
